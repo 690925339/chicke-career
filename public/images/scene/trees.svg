@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <path d="M10 60 L20 20 L30 60 Z" fill="#4DA349" opacity="0.8"/>
+  <path d="M25 60 L35 10 L45 60 Z" fill="#3D8C39" opacity="0.9"/>
+  <path d="M40 60 L55 15 L70 60 Z" fill="#5AAF56" opacity="0.7"/>
+  <path d="M60 60 L75 5 L90 60 Z" fill="#3D8C39" opacity="0.9"/>
+  <path d="M85 60 L95 25 L105 60 Z" fill="#4DA349" opacity="0.8"/>
+  <path d="M100 60 L115 10 L130 60 Z" fill="#3D8C39" opacity="0.9"/>
+  <path d="M125 60 L140 20 L155 60 Z" fill="#5AAF56" opacity="0.7"/>
+  <path d="M150 60 L165 15 L180 60 Z" fill="#4DA349" opacity="0.8"/>
+  <path d="M175 60 L185 25 L195 60 Z" fill="#3D8C39" opacity="0.9"/>
+</svg>

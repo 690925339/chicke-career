@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="chestWood" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="chestGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  <path d="M10 50v35c0 5 5 5 5 5h70c0 0 5 0 5-5V50" fill="#7C2D12"/>
+  <path d="M10 48v35c0 5 5 5 5 5h70c0 0 5 0 5-5V48" fill="url(#chestWood)"/>
+  <path d="M15 40c0-15 15-25 35-25s35 10 35 25" fill="url(#chestWood)" stroke="#7C2D12" stroke-width="4"/>
+  <path d="M10 45h80v12H10z" fill="url(#chestGold)" stroke="#7C2D12" stroke-width="4"/>
+  <rect x="40" y="40" width="20" height="22" rx="4" fill="url(#chestGold)" stroke="#7C2D12" stroke-width="4"/>
+  <circle cx="50" cy="51" r="3" fill="#7C2D12"/>
+</svg>
