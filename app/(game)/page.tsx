@@ -38,31 +38,31 @@ export default function HomePage() {
     >
       {/* 云朵 */}
       <div className="animate-drift" style={{ position: "absolute", top: 24, left: "10%", opacity: 0.9 }}>
-        <Image src="/images/scene/cloud.svg" alt="" width={80} height={48} />
+        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={80} height={48} />
       </div>
       <div className="animate-drift" style={{ position: "absolute", top: 40, right: "8%", opacity: 0.7, animationDelay: "1.5s", animationDuration: "5s" }}>
-        <Image src="/images/scene/cloud.svg" alt="" width={60} height={36} />
+        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={60} height={36} />
       </div>
       <div className="animate-drift" style={{ position: "absolute", top: 80, left: "45%", opacity: 0.6, animationDelay: "3s" }}>
-        <Image src="/images/scene/cloud.svg" alt="" width={50} height={30} />
+        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={50} height={30} />
       </div>
 
       {/* 树木 */}
       <div style={{ position: "absolute", bottom: 120, left: 8 }}>
-        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} />
+        <Image src="/chicke-career/images/scene/trees.svg" alt="" width={80} height={110} />
       </div>
       <div style={{ position: "absolute", bottom: 120, right: 8 }}>
-        <Image src="/images/scene/trees.svg" alt="" width={70} height={96} style={{ transform: "scaleX(-1)" }} />
+        <Image src="/chicke-career/images/scene/trees.svg" alt="" width={70} height={96} style={{ transform: "scaleX(-1)" }} />
       </div>
 
       {/* 风车 */}
       <div style={{ position: "absolute", bottom: 130, right: 70 }}>
-        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} />
+        <Image src="/chicke-career/images/scene/windmill.svg" alt="" width={50} height={70} />
       </div>
 
       {/* 草地 */}
       <div style={{ position: "absolute", bottom: 110, left: 0, right: 0 }}>
-        <Image src="/images/scene/grass.svg" alt="" width={480} height={40} style={{ width: "100%", height: 40 }} />
+        <Image src="/chicke-career/images/scene/grass.svg" alt="" width={480} height={40} style={{ width: "100%", height: 40 }} />
       </div>
 
       {/* 顶部状态栏 */}
@@ -95,7 +95,7 @@ export default function HomePage() {
               justifyContent: "center",
             }}
           >
-            <Image src="/images/characters/chicken-base.svg" alt="鸡" width={22} height={22} />
+            <Image src="/chicke-career/images/characters/chicken-base.svg" alt="鸡" width={22} height={22} />
           </div>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#4B2D8F" }}>鸡鸡大师</span>
         </div>
@@ -106,14 +106,14 @@ export default function HomePage() {
             className="glass-card"
             style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 16, padding: "4px 10px" }}
           >
-            <Image src="/images/icons/coin.svg" alt="金币" width={18} height={18} />
+            <Image src="/chicke-career/images/icons/coin.svg" alt="金币" width={18} height={18} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "#92400E" }}>{chickenCoin}</span>
           </div>
           <div
             className="glass-card"
             style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 16, padding: "4px 10px" }}
           >
-            <Image src="/images/icons/diamond.svg" alt="钻石" width={18} height={18} />
+            <Image src="/chicke-career/images/icons/diamond.svg" alt="钻石" width={18} height={18} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF" }}>{diamond}</span>
           </div>
           {/* 签到按钮 */}
@@ -133,7 +133,7 @@ export default function HomePage() {
               cursor: "pointer",
             }}
           >
-            <Image src="/images/icons/checkin.svg" alt="签到" width={18} height={18} />
+            <Image src="/chicke-career/images/icons/checkin.svg" alt="签到" width={18} height={18} />
             <span style={{ fontSize: 12, fontWeight: 600, color: checkedInToday ? "#9CA3AF" : "#92400E" }}>
               {checkedInToday ? "已签" : "签到"}
             </span>
@@ -177,9 +177,9 @@ export default function HomePage() {
         }}
       >
         {[
-          { icon: "/images/icons/bag.svg", label: "职业", path: "/career" },
-          { icon: "/images/icons/scroll.svg", label: "历史", path: "/history" },
-          { icon: "/images/icons/chest.svg", label: "成就", path: "/achievement" },
+          { icon: "/chicke-career/images/icons/bag.svg", label: "职业", path: "/career" },
+          { icon: "/chicke-career/images/icons/scroll.svg", label: "历史", path: "/history" },
+          { icon: "/chicke-career/images/icons/chest.svg", label: "成就", path: "/achievement" },
         ].map((item) => (
           <button
             key={item.path}
@@ -249,7 +249,7 @@ export default function HomePage() {
           }}
         >
           <div className="animate-float">
-            <Image src="/images/characters/chicken-base.svg" alt="鸡鸡" width={110} height={110} />
+            <Image src="/chicke-career/images/characters/chicken-base.svg" alt="鸡鸡" width={110} height={110} />
           </div>
         </div>
 
@@ -308,7 +308,7 @@ export default function HomePage() {
             boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
           }}
         >
-          <Image src="/images/icons/bag.svg" alt="职业" width={28} height={28} />
+          <Image src="/chicke-career/images/icons/bag.svg" alt="职业" width={28} height={28} />
           <span style={{ fontSize: 10, color: "#7C3AED", fontWeight: 600 }}>职业</span>
         </button>
 
@@ -331,7 +331,7 @@ export default function HomePage() {
             boxShadow: `0 6px 24px ${currentCareer.color}66, 0 0 0 4px ${currentCareer.color}33`,
           }}
         >
-          <Image src="/images/characters/chicken-base.svg" alt="使用技能" width={40} height={40} style={{ filter: "brightness(10)" }} />
+          <Image src="/chicke-career/images/characters/chicken-base.svg" alt="使用技能" width={40} height={40} style={{ filter: "brightness(10)" }} />
           <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{currentCareer.skill.name}</span>
         </button>
 
@@ -354,7 +354,7 @@ export default function HomePage() {
             boxShadow: "0 4px 16px rgba(245,158,11,0.3)",
           }}
         >
-          <Image src="/images/icons/scroll.svg" alt="历史" width={28} height={28} />
+          <Image src="/chicke-career/images/icons/scroll.svg" alt="历史" width={28} height={28} />
           <span style={{ fontSize: 10, color: "#B45309", fontWeight: 600 }}>历史</span>
         </button>
       </div>

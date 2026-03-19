@@ -60,7 +60,7 @@ export default function PalmReadingPage() {
 
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div className="animate-float" style={{ display: "inline-block", marginBottom: 12 }}>
-            <Image src="/images/characters/chicken-base.svg" alt="算命鸡" width={80} height={80} />
+            <Image src="/chicke-career/images/characters/chicken-base.svg" alt="算命鸡" width={80} height={80} />
           </div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#4C1D95" }}>算命鸡为您解读</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280" }}>请提供基本信息，越详细越准确哦</p>
@@ -277,7 +277,7 @@ export default function PalmReadingPage() {
         }}
       >
         <div className="animate-float">
-          <Image src="/images/characters/chicken-base.svg" alt="算命鸡" width={100} height={100} />
+          <Image src="/chicke-career/images/characters/chicken-base.svg" alt="算命鸡" width={100} height={100} />
         </div>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#4C1D95" }}>算命鸡正在解读中...</h3>
         <p style={{ margin: 0, fontSize: 13, color: "#6B7280", textAlign: "center", maxWidth: 240 }}>正在深度分析您的掌纹，感知命运脉络，请稍候</p>
@@ -312,7 +312,7 @@ export default function PalmReadingPage() {
             textAlign: "center",
           }}
         >
-          <Image src="/images/characters/chicken-base.svg" alt="算命鸡" width={60} height={60} style={{ filter: "brightness(10)", marginBottom: 10 }} />
+          <Image src="/chicke-career/images/characters/chicken-base.svg" alt="算命鸡" width={60} height={60} style={{ filter: "brightness(10)", marginBottom: 10 }} />
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#fff" }}>命运解读报告</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
             {gender === "male" ? "男" : "女"} · {age}岁 · 幸运数字 {result.luckyNumber} · 幸运色 {result.luckyColor}

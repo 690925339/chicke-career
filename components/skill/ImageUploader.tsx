@@ -45,7 +45,7 @@ export default function ImageUploader({ preview, label, onSelect }: Props) {
           <img src={preview} alt="预览" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <Image src="/images/icons/checkin.svg" alt="" width={40} height={40} style={{ opacity: 0.5 }} />
+            <Image src="/chicke-career/images/icons/checkin.svg" alt="" width={40} height={40} style={{ opacity: 0.5 }} />
             <span style={{ fontSize: 14, color: "#7C3AED" }}>{label}</span>
             <span style={{ fontSize: 12, color: "#9CA3AF" }}>点击选择图片</span>
           </div>

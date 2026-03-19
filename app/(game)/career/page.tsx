@@ -64,7 +64,7 @@ export default function CareerPage() {
                     }}
                   >
                     {unlocked ? (
-                      <Image src="/images/characters/chicken-base.svg" alt={career.name} width={40} height={40} />
+                      <Image src="/chicke-career/images/characters/chicken-base.svg" alt={career.name} width={40} height={40} />
                     ) : (
                       <svg width="28" height="28" viewBox="0 0 24 24" fill={career.color} opacity={0.4}>
                         <path d="M12 1C8.676 1 6 3.676 6 7v1H4v14h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
