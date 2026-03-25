@@ -9,13 +9,23 @@ export const CAREERS: Career[] = [
     unlockCost: 0,
     color: "#7C3AED",
     bgColor: "#EDE9FE",
-    skill: {
-      id: "palm-reading",
-      name: "手相解读",
-      description: "上传你的手掌照片，AI算命鸡将为你解读命运玄机",
-      dailyFreeQuota: 3,
-      extraCost: 10,
-    },
+    skills: [
+      {
+        id: "palm-reading",
+        name: "手相解读",
+        description: "上传你的手景照片，AI算命鸡将为你解读命运玄机",
+        dailyFreeQuota: 3,
+        extraCost: 10,
+      },
+      {
+        id: "bazi-reading",
+        name: "八字精批",
+        description: "输入出生日期，开启深度命理分析",
+        dailyFreeQuota: 1,
+        extraCost: 20,
+      }
+    ],
+    defaultSkillId: "palm-reading",
   },
   {
     id: "doctor",
@@ -25,13 +35,16 @@ export const CAREERS: Career[] = [
     unlockCost: 500,
     color: "#059669",
     bgColor: "#D1FAE5",
-    skill: {
-      id: "health-analysis",
-      name: "健康分析",
-      description: "敬请期待",
-      dailyFreeQuota: 3,
-      extraCost: 10,
-    },
+    skills: [
+      {
+        id: "health-analysis",
+        name: "健康分析",
+        description: "敬请期待",
+        dailyFreeQuota: 3,
+        extraCost: 10,
+      }
+    ],
+    defaultSkillId: "health-analysis",
   },
   {
     id: "lawyer",
@@ -41,13 +54,16 @@ export const CAREERS: Career[] = [
     unlockCost: 800,
     color: "#1D4ED8",
     bgColor: "#DBEAFE",
-    skill: {
-      id: "legal-advice",
-      name: "法律咨询",
-      description: "敬请期待",
-      dailyFreeQuota: 3,
-      extraCost: 10,
-    },
+    skills: [
+      {
+        id: "legal-advice",
+        name: "法律咨询",
+        description: "敬请期待",
+        dailyFreeQuota: 3,
+        extraCost: 10,
+      }
+    ],
+    defaultSkillId: "legal-advice",
   },
 ];
 

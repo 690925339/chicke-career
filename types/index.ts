@@ -6,14 +6,15 @@ export interface Career {
   unlockCost: number;
   color: string;
   bgColor: string;
-  skill: CareerSkill;
+  skills: CareerSkill[];
+  defaultSkillId: string;
 }
 
 export interface CareerSkill {
   id: string;
   name: string;
   description: string;
-  dailyFreeQuota: number;
+  dailyFreeQuota: number; // For backward compatibility or base quota
   extraCost: number;
 }
 
@@ -61,4 +62,13 @@ export interface CheckInDay {
   day: number;
   reward: { chickenCoin: number };
   claimed: boolean;
+}
+
+export interface Masterpiece {
+  id: string;
+  name: string;
+  originalArtist: string;
+  imageUrl: string;
+  chickenDescription: string;
+  collectedAt: string;
 }

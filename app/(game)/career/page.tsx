@@ -92,18 +92,22 @@ export default function CareerPage() {
                       )}
                     </div>
                     <p style={{ margin: "0 0 4px", fontSize: 12, color: "#6B7280" }}>{career.description}</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "#fff",
-                          background: career.color,
-                          borderRadius: 6,
-                          padding: "1px 6px",
-                        }}
-                      >
-                        {career.skill.name}
-                      </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                      {career.skills.map(skill => (
+                        <span
+                          key={skill.id}
+                          style={{
+                            fontSize: 10,
+                            color: career.color,
+                            background: `${career.color}11`,
+                            border: `1px solid ${career.color}33`,
+                            borderRadius: 6,
+                            padding: "1px 6px",
+                          }}
+                        >
+                          {skill.name}
+                        </span>
+                      ))}
                     </div>
                   </div>
 

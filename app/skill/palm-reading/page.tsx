@@ -22,7 +22,7 @@ const MOCK_RESULT: PalmReadingResult = {
 export default function PalmReadingPage() {
   const router = useRouter();
   const { step, age, gender, leftHandPreview, rightHandPreview, result, setStep, setInfo, setHandImage, setResult, reset } = useSkillStore();
-  const { addSkillRecord, incrementDailyUsage, getDailyUsage, addCoins } = useUserStore();
+  const { addSkillRecord, addCoins } = useUserStore();
 
   const [localAge, setLocalAge] = useState("");
   const [localGender, setLocalGender] = useState<"male" | "female" | null>(null);
@@ -32,7 +32,6 @@ export default function PalmReadingPage() {
     // 模拟 AI 分析延迟
     await new Promise((r) => setTimeout(r, 3000));
     setResult(MOCK_RESULT);
-    incrementDailyUsage("palm-reading");
     addSkillRecord({
       id: uuidv4(),
       careerId: "fortune-teller",
