@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUserStore } from "@/store/user.store";
 import { CAREERS } from "@/lib/careers";
+import { SFX, playSFX } from "@/lib/audio";
 import AnimatedChicken, { ChickenState } from "@/components/game/AnimatedChicken";
 
 export default function HomePage() {
@@ -63,9 +64,11 @@ export default function HomePage() {
       setCheckInMsg(`签到成功！获得 ${reward} 鸡币`);
       triggerChicken("checkin");
       addAffection(5);
+      playSFX(SFX.SUCCESS);
     } else {
       setCheckInMsg("今天已经签到过啦~");
       triggerChicken("tap");
+      playSFX(SFX.TAP);
     }
     setShowCheckIn(true);
     setTimeout(() => setShowCheckIn(false), 2000);
@@ -75,10 +78,12 @@ export default function HomePage() {
     if (useAura(1)) {
       triggerChicken("skill");
       addAffection(2);
+      playSFX(SFX.SKILL);
       setTimeout(() => router.push(`/skill/${currentSkill.id}`), 500);
     } else {
       setShowRecoveryModal(true);
       triggerChicken("sleep");
+      playSFX(SFX.TAP);
     }
   };
 
@@ -89,6 +94,7 @@ export default function HomePage() {
     recoverAura(maxAura);
     setShowRecoveryModal(false);
     addAffection(10);
+    playSFX(SFX.SUCCESS);
     setTimeout(() => setShowCheckIn(false), 2000);
   };
 
@@ -97,6 +103,24 @@ export default function HomePage() {
       {/* 灵气光晕 (中景) */}
       <div className="aura-glow" style={{ opacity: isNight ? 0.4 : 0.8 }} />
       
+      {/* 10/10 环境特效: 昼间光线 / 夜间萤火虫 */}
+      {!isNight ? (
+        <div className="god-rays" />
+      ) : (
+        [...Array(8)].map((_, i) => (
+          <div 
+            key={`firefly-${i}`} 
+            className="firefly" 
+            style={{ 
+              left: `${10 + Math.random() * 80}%`, 
+              top: `${20 + Math.random() * 60}%`, 
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${6 + Math.random() * 4}s`
+            }} 
+          />
+        ))
+      )}
+
       {/* 漂浮粒子 (近景) */}
       {[...Array(12)].map((_, i) => (
         <div 
@@ -150,7 +174,7 @@ export default function HomePage() {
         top: 0,
         left: 0,
         right: 0,
-        padding: "20px 20px 10px",
+        padding: "16px 20px 10px",
         zIndex: 100,
         display: "flex",
         flexDirection: "column",
@@ -160,7 +184,13 @@ export default function HomePage() {
         borderBottom: "1px solid rgba(255,255,255,0.2)"
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {/* 职业小贴片 - 现在移到了顶部左侧 */}
+            <div className="status-pill" style={{ background: `${currentCareer.color}11`, border: `1px solid ${currentCareer.color}33` }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: currentCareer.color }} />
+              <span style={{ fontSize: 13, fontWeight: 900, color: currentCareer.color }}>{currentCareer.name}</span>
+            </div>
+            
             <div className="status-pill">
               <Image src="/images/icons/coin.svg" alt="鸡币" width={18} height={18} />
               <span style={{ fontSize: 14, fontWeight: 700, color: isNight ? "#E2E8F0" : "#4B5563" }}>{chickenCoin}</span>
@@ -312,22 +342,6 @@ export default function HomePage() {
           zIndex: 5,
         }}
       >
-        {/* 职业名牌 */}
-        <div
-          className="glass-card"
-          style={{
-            borderRadius: 24,
-            padding: "6px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: currentCareer.color, boxShadow: `0 0 8px ${currentCareer.color}` }} />
-          <span style={{ fontSize: 15, fontWeight: 800, color: currentCareer.color }}>{currentCareer.name}</span>
-          <span style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>{currentCareer.title}</span>
-        </div>
-
         {/* 角色展示台 */}
         <div style={{ position: "relative" }}>
            {/* 底层光晕 */}
@@ -335,7 +349,7 @@ export default function HomePage() {
             position: "absolute", 
             top: "50%", left: "50%", 
             transform: "translate(-50%, -50%)",
-            width: 220, height: 220, 
+            width: 280, height: 280, 
             background: `radial-gradient(circle, ${currentCareer.color}33 0%, transparent 70%)`,
             zIndex: 0 
           }} />
@@ -345,48 +359,6 @@ export default function HomePage() {
           />
         </div>
 
-        {/* 技能切换区域 */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-          <div
-            className="glass-card"
-            style={{
-              borderRadius: 20,
-              padding: "12px 24px",
-              textAlign: "center",
-              minWidth: 200,
-              border: "1px solid rgba(255,255,255,0.4)",
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 12, color: "#6B7280", fontWeight: 500, opacity: 0.8 }}>当前使用技能</p>
-            <p style={{ margin: "4px 0 2px", fontSize: 16, fontWeight: 800, color: "#4B2D8F" }}>
-              {currentSkill.name}
-            </p>
-          </div>
-          
-          {/* 多技能切换小点 */}
-          {currentCareer.skills.length > 1 && (
-            <div style={{ display: "flex", gap: 10 }}>
-              {currentCareer.skills.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => setCurrentSkill(s.id)}
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: currentSkillId === s.id ? currentCareer.color : "rgba(0,0,0,0.15)",
-                    border: currentSkillId === s.id ? `2px solid #fff` : "none",
-                    padding: 0,
-                    cursor: "pointer",
-                    transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                    boxShadow: currentSkillId === s.id ? `0 0 8px ${currentCareer.color}` : "none",
-                    transform: currentSkillId === s.id ? "scale(1.2)" : "scale(1)"
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 底部操作区 (浮岛式底栏) */}
@@ -436,6 +408,49 @@ export default function HomePage() {
 
           {/* 中间主按钮：触发当前技能 (更大更圆润) */}
           <div style={{ position: "relative" }}>
+            {/* 弱化的技能名称与切换点 - 移到了按钮上方 */}
+            <div style={{ 
+              position: "absolute", 
+              top: -46, 
+              left: "50%", 
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+              pointerEvents: "none"
+            }}>
+              <span style={{ 
+                fontSize: 12, 
+                fontWeight: 800, 
+                color: isNight ? "#CBD5E1" : "#4B2D8F",
+                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                whiteSpace: "nowrap"
+              }}>
+                {currentSkill.name}
+              </span>
+              {currentCareer.skills.length > 1 && (
+                <div style={{ display: "flex", gap: 6, pointerEvents: "auto" }}>
+                  {currentCareer.skills.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setCurrentSkill(s.id)}
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: currentSkillId === s.id ? currentCareer.color : "rgba(0,0,0,0.2)",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        transition: "all 0.3s ease"
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 12, repeat: Infinity, ease: "linear" }}

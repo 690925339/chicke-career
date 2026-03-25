@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { SFX, playSFX } from "@/lib/audio";
 
 export type ChickenState = "idle" | "hover" | "tap" | "checkin" | "skill" | "sleep";
 
@@ -274,6 +275,7 @@ export default function AnimatedChicken({
     setState("tap");
     showSpeech();
     spawnParticles("heart", 5);
+    playSFX(SFX.TAP);
     resetSleepTimer();
     onChickenClick?.();
     setTimeout(() => setState("idle"), 800);
@@ -376,6 +378,17 @@ export default function AnimatedChicken({
         ))}
       </AnimatePresence>
 
+      {/* 角色动态底影 - 增加地面锚定感 */}
+      <motion.div 
+        className="dynamic-shadow"
+        animate={{
+          scaleX: state === "tap" ? [1, 1.2, 1] : 1,
+          opacity: state === "sleep" ? 0.3 : 0.6,
+          scale: (chickenVariants[state] as any).scale || 1
+        }}
+        transition={{ duration: 0.5 }}
+      />
+
       {/* Chicken body - Pre-render Image Stack for Instant Swap (Flash-like) */}
       <motion.div
         key={state} // Trigger animation on state change
@@ -401,7 +414,7 @@ export default function AnimatedChicken({
         style={{ cursor: "pointer", zIndex: 5, userSelect: "none", position: "relative" }}
         whileTap={state !== "sleep" ? { scale: 0.95 } : {}}
       >
-        <div style={{ position: "relative", width: 130, height: 173 }}>
+        <div style={{ position: "relative", width: 170, height: 226 }}>
           {/* 所有图片预渲染，解决白底闪烁与加载延迟 */}
           {(Object.entries(imageMap) as [ChickenState, string][]).map(([s, url]) => (
             <div 
