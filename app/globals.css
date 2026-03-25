@@ -54,11 +54,23 @@ html, body {
   100% { background-position: 200% center; }
 }
 
+@keyframes skill-spark {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.8); opacity: 0.4; }
+}
+
+@keyframes zzz-float {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-18px) scale(1.2); opacity: 0; }
+}
+
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-drift { animation: drift 4s ease-in-out infinite alternate; }
 .animate-sway { animation: sway 3s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 8s linear infinite; }
 .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-skill-spark { animation: skill-spark 0.8s ease-in-out infinite; }
+.animate-zzz { animation: zzz-float 2s ease-out infinite; }
 
 .game-btn {
   position: relative;

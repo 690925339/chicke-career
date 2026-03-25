@@ -22,7 +22,7 @@ export default function HistoryPage() {
               gap: 12,
             }}
           >
-            <Image src="/chicke-career/images/icons/scroll.svg" alt="" width={60} height={60} style={{ opacity: 0.3 }} />
+            <Image src="/images/icons/scroll.svg" alt="" width={60} height={60} style={{ opacity: 0.3 }} />
             <p style={{ margin: 0, color: "#9CA3AF", fontSize: 14 }}>暂无记录，去使用技能吧~</p>
           </div>
         ) : (
@@ -38,7 +38,7 @@ export default function HistoryPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <Image src="/chicke-career/images/icons/scroll.svg" alt="" width={32} height={32} />
+                  <Image src="/images/icons/scroll.svg" alt="" width={32} height={32} />
                   <div>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1F2937" }}>手相解读报告</p>
                     <p style={{ margin: 0, fontSize: 12, color: "#9CA3AF" }}>

@@ -1,26 +1,35 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUserStore } from "@/store/user.store";
 import { CAREERS } from "@/lib/careers";
+import AnimatedChicken, { ChickenState } from "@/components/game/AnimatedChicken";
 
 export default function HomePage() {
   const router = useRouter();
   const { chickenCoin, diamond, currentCareerId, checkIn, lastCheckInDate } = useUserStore();
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [checkInMsg, setCheckInMsg] = useState("");
+  const [chickenTrigger, setChickenTrigger] = useState<{ state: ChickenState; key: number } | null>(null);
+  const triggerKeyRef = useRef(0);
 
   const currentCareer = CAREERS.find((c) => c.id === currentCareerId) ?? CAREERS[0];
   const todayStr = new Date().toDateString();
   const checkedInToday = lastCheckInDate === todayStr;
 
+  const triggerChicken = (state: ChickenState) => {
+    setChickenTrigger({ state, key: ++triggerKeyRef.current });
+  };
+
   const handleCheckIn = () => {
     const { success, reward } = checkIn();
     if (success) {
       setCheckInMsg(`签到成功！获得 ${reward} 鸡币`);
+      triggerChicken("checkin");
     } else {
       setCheckInMsg("今天已经签到过啦~");
+      triggerChicken("tap");
     }
     setShowCheckIn(true);
     setTimeout(() => setShowCheckIn(false), 2000);
@@ -38,31 +47,31 @@ export default function HomePage() {
     >
       {/* 云朵 */}
       <div className="animate-drift" style={{ position: "absolute", top: 24, left: "10%", opacity: 0.9 }}>
-        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={80} height={48} />
+        <Image src="/images/scene/cloud.svg" alt="" width={80} height={48} />
       </div>
       <div className="animate-drift" style={{ position: "absolute", top: 40, right: "8%", opacity: 0.7, animationDelay: "1.5s", animationDuration: "5s" }}>
-        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={60} height={36} />
+        <Image src="/images/scene/cloud.svg" alt="" width={60} height={36} />
       </div>
       <div className="animate-drift" style={{ position: "absolute", top: 80, left: "45%", opacity: 0.6, animationDelay: "3s" }}>
-        <Image src="/chicke-career/images/scene/cloud.svg" alt="" width={50} height={30} />
+        <Image src="/images/scene/cloud.svg" alt="" width={50} height={30} />
       </div>
 
       {/* 树木 */}
       <div style={{ position: "absolute", bottom: 120, left: 8 }}>
-        <Image src="/chicke-career/images/scene/trees.svg" alt="" width={80} height={110} />
+        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} />
       </div>
       <div style={{ position: "absolute", bottom: 120, right: 8 }}>
-        <Image src="/chicke-career/images/scene/trees.svg" alt="" width={70} height={96} style={{ transform: "scaleX(-1)" }} />
+        <Image src="/images/scene/trees.svg" alt="" width={70} height={96} style={{ transform: "scaleX(-1)" }} />
       </div>
 
       {/* 风车 */}
       <div style={{ position: "absolute", bottom: 130, right: 70 }}>
-        <Image src="/chicke-career/images/scene/windmill.svg" alt="" width={50} height={70} />
+        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} />
       </div>
 
       {/* 草地 */}
       <div style={{ position: "absolute", bottom: 110, left: 0, right: 0 }}>
-        <Image src="/chicke-career/images/scene/grass.svg" alt="" width={480} height={40} style={{ width: "100%", height: 40 }} />
+        <Image src="/images/scene/grass.svg" alt="" width={480} height={40} style={{ width: "100%", height: 40 }} />
       </div>
 
       {/* 顶部状态栏 */}
@@ -95,7 +104,7 @@ export default function HomePage() {
               justifyContent: "center",
             }}
           >
-            <Image src="/chicke-career/images/characters/chicken-base.svg" alt="鸡" width={22} height={22} />
+            <Image src="/images/characters/fortune-chicken.png" alt="鸡" width={22} height={22} />
           </div>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#4B2D8F" }}>鸡鸡大师</span>
         </div>
@@ -106,14 +115,14 @@ export default function HomePage() {
             className="glass-card"
             style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 16, padding: "4px 10px" }}
           >
-            <Image src="/chicke-career/images/icons/coin.svg" alt="金币" width={18} height={18} />
+            <Image src="/images/icons/coin.svg" alt="金币" width={18} height={18} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "#92400E" }}>{chickenCoin}</span>
           </div>
           <div
             className="glass-card"
             style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 16, padding: "4px 10px" }}
           >
-            <Image src="/chicke-career/images/icons/diamond.svg" alt="钻石" width={18} height={18} />
+            <Image src="/images/icons/diamond.svg" alt="钻石" width={18} height={18} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF" }}>{diamond}</span>
           </div>
           {/* 签到按钮 */}
@@ -133,7 +142,7 @@ export default function HomePage() {
               cursor: "pointer",
             }}
           >
-            <Image src="/chicke-career/images/icons/checkin.svg" alt="签到" width={18} height={18} />
+            <Image src="/images/icons/checkin.svg" alt="签到" width={18} height={18} />
             <span style={{ fontSize: 12, fontWeight: 600, color: checkedInToday ? "#9CA3AF" : "#92400E" }}>
               {checkedInToday ? "已签" : "签到"}
             </span>
@@ -177,9 +186,9 @@ export default function HomePage() {
         }}
       >
         {[
-          { icon: "/chicke-career/images/icons/bag.svg", label: "职业", path: "/career" },
-          { icon: "/chicke-career/images/icons/scroll.svg", label: "历史", path: "/history" },
-          { icon: "/chicke-career/images/icons/chest.svg", label: "成就", path: "/achievement" },
+          { icon: "/images/icons/bag.svg", label: "职业", path: "/career" },
+          { icon: "/images/icons/scroll.svg", label: "历史", path: "/history" },
+          { icon: "/images/icons/chest.svg", label: "成就", path: "/achievement" },
         ].map((item) => (
           <button
             key={item.path}
@@ -235,23 +244,10 @@ export default function HomePage() {
         </div>
 
         {/* 角色展示台 */}
-        <div
-          style={{
-            width: 160,
-            height: 160,
-            borderRadius: "50%",
-            background: `radial-gradient(circle at 40% 35%, ${currentCareer.bgColor}, ${currentCareer.color}44)`,
-            border: `4px solid ${currentCareer.color}66`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: `0 8px 32px ${currentCareer.color}44, 0 0 0 8px ${currentCareer.bgColor}88`,
-          }}
-        >
-          <div className="animate-float">
-            <Image src="/chicke-career/images/characters/chicken-base.svg" alt="鸡鸡" width={110} height={110} />
-          </div>
-        </div>
+        <AnimatedChicken
+          careerColor={currentCareer.color}
+          externalState={chickenTrigger?.state ?? null}
+        />
 
         {/* 技能信息 */}
         <div
@@ -308,14 +304,17 @@ export default function HomePage() {
             boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
           }}
         >
-          <Image src="/chicke-career/images/icons/bag.svg" alt="职业" width={28} height={28} />
+          <Image src="/images/icons/bag.svg" alt="职业" width={28} height={28} />
           <span style={{ fontSize: 10, color: "#7C3AED", fontWeight: 600 }}>职业</span>
         </button>
 
         {/* 中间主按钮：使用技能 */}
         <button
           className="game-btn"
-          onClick={() => router.push(`/skill/${currentCareer.skill.id}`)}
+          onClick={() => {
+            triggerChicken("skill");
+            setTimeout(() => router.push(`/skill/${currentCareer.skill.id}`), 500);
+          }}
           style={{
             width: 100,
             height: 100,
@@ -331,7 +330,7 @@ export default function HomePage() {
             boxShadow: `0 6px 24px ${currentCareer.color}66, 0 0 0 4px ${currentCareer.color}33`,
           }}
         >
-          <Image src="/chicke-career/images/characters/chicken-base.svg" alt="使用技能" width={40} height={40} style={{ filter: "brightness(10)" }} />
+          <Image src="/images/characters/fortune-chicken.png" alt="使用技能" width={40} height={40} style={{ filter: "brightness(10)" }} />
           <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{currentCareer.skill.name}</span>
         </button>
 
@@ -354,7 +353,7 @@ export default function HomePage() {
             boxShadow: "0 4px 16px rgba(245,158,11,0.3)",
           }}
         >
-          <Image src="/chicke-career/images/icons/scroll.svg" alt="历史" width={28} height={28} />
+          <Image src="/images/icons/scroll.svg" alt="历史" width={28} height={28} />
           <span style={{ fontSize: 10, color: "#B45309", fontWeight: 600 }}>历史</span>
         </button>
       </div>

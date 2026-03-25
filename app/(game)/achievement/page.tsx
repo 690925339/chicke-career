@@ -39,9 +39,9 @@ export default function AchievementPage() {
           }}
         >
           {[
-            { icon: "/chicke-career/images/icons/coin.svg", label: "鸡币", value: chickenCoin },
-            { icon: "/chicke-career/images/icons/diamond.svg", label: "钻石", value: diamond },
-            { icon: "/chicke-career/images/icons/chest.svg", label: "成就", value: `${unlockedCount}/${ACHIEVEMENT_LIST.length}` },
+            { icon: "/images/icons/coin.svg", label: "鸡币", value: chickenCoin },
+            { icon: "/images/icons/diamond.svg", label: "钻石", value: diamond },
+            { icon: "/images/icons/chest.svg", label: "成就", value: `${unlockedCount}/${ACHIEVEMENT_LIST.length}` },
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
               <Image src={item.icon} alt={item.label} width={28} height={28} style={{ margin: "0 auto" }} />
@@ -81,7 +81,7 @@ export default function AchievementPage() {
                     flexShrink: 0,
                   }}
                 >
-                  <Image src="/chicke-career/images/icons/chest.svg" alt="" width={28} height={28} style={{ opacity: unlocked ? 1 : 0.3 }} />
+                  <Image src="/images/icons/chest.svg" alt="" width={28} height={28} style={{ opacity: unlocked ? 1 : 0.3 }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1F2937" }}>{achievement.title}</p>
@@ -89,13 +89,13 @@ export default function AchievementPage() {
                   <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                     {achievement.reward.chickenCoin && (
                       <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Image src="/chicke-career/images/icons/coin.svg" alt="" width={14} height={14} />
+                        <Image src="/images/icons/coin.svg" alt="" width={14} height={14} />
                         <span style={{ fontSize: 11, color: "#B45309", fontWeight: 600 }}>+{achievement.reward.chickenCoin}</span>
                       </div>
                     )}
                     {achievement.reward.diamond && (
                       <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Image src="/chicke-career/images/icons/diamond.svg" alt="" width={14} height={14} />
+                        <Image src="/images/icons/diamond.svg" alt="" width={14} height={14} />
                         <span style={{ fontSize: 11, color: "#1E40AF", fontWeight: 600 }}>+{achievement.reward.diamond}</span>
                       </div>
                     )}
