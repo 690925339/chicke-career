@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUserStore } from "@/store/user.store";
 import { CAREERS } from "@/lib/careers";
+import { DESTINATIONS, MASTERPIECES, Masterpiece } from "@/lib/masterpieces";
 import { SFX, playSFX } from "@/lib/audio";
 import AnimatedChicken, { ChickenState } from "@/components/game/AnimatedChicken";
+import MagicDoor from "@/components/game/MagicDoor";
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,11 +26,26 @@ export default function HomePage() {
     useAura,
     recoverAura,
     checkAuraRecovery,
-    addAffection
+    addAffection,
+    travelState,
+    currentTrip,
+    checkTravelStatus,
+    claimTravelReward,
+    eggs,
+    skillPoints,
+    hunger,
+    feedChicken,
+    exchangeEggsForPoints,
+    useSkillPoint,
+    startTravel
   } = useUserStore();
   
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [showRewardModal, setShowRewardModal] = useState(false);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
+  const [showEggAnim, setShowEggAnim] = useState<{ x: number; y: number } | null>(null);
+  const [travelReward, setTravelReward] = useState<Masterpiece | null>(null);
   const [checkInMsg, setCheckInMsg] = useState("");
   const [chickenTrigger, setChickenTrigger] = useState<{ state: ChickenState; key: number } | null>(null);
   const [isNight, setIsNight] = useState(false);
@@ -40,12 +57,16 @@ export default function HomePage() {
     setIsNight(hours >= 19 || hours < 6);
   }, []);
 
-  // 定期检查灵气恢复
+  // 定期检查灵气恢复与旅行状态
   useEffect(() => {
     checkAuraRecovery();
-    const timer = setInterval(checkAuraRecovery, 60000);
+    checkTravelStatus();
+    const timer = setInterval(() => {
+      checkAuraRecovery();
+      checkTravelStatus();
+    }, 60000);
     return () => clearInterval(timer);
-  }, [checkAuraRecovery]);
+  }, [checkAuraRecovery, checkTravelStatus]);
 
   const currentCareer = CAREERS.find((c) => c.id === currentCareerId) ?? CAREERS[0];
   const currentSkill = currentCareer.skills.find(s => s.id === currentSkillId) ?? currentCareer.skills[0];
@@ -74,16 +95,77 @@ export default function HomePage() {
     setTimeout(() => setShowCheckIn(false), 2000);
   };
 
+  const handleFeed = (e: React.MouseEvent) => {
+    if (travelState === 'traveling') {
+      setCheckInMsg("小鸡在旅行中，暂时不能喂食哦~ ✨");
+      setShowCheckIn(true);
+      playSFX(SFX.TAP);
+      setTimeout(() => setShowCheckIn(false), 2000);
+      return;
+    }
+    const res = feedChicken();
+    if (res.success) {
+      playSFX(SFX.TAP);
+      triggerChicken("eating");
+      setShowEggAnim({ x: e.clientX, y: e.clientY });
+      setTimeout(() => setShowEggAnim(null), 1000);
+    } else {
+      setCheckInMsg("没米啦，休息下再喂吧~ ✨");
+      setShowCheckIn(true);
+      playSFX(SFX.TAP);
+      setTimeout(() => setShowCheckIn(false), 2000);
+    }
+  };
+
   const handleUseSkill = () => {
-    if (useAura(1)) {
+    if (useSkillPoint(1)) {
       triggerChicken("skill");
       addAffection(2);
       playSFX(SFX.SKILL);
-      setTimeout(() => router.push(`/skill/${currentSkill.id}`), 500);
+      // "打工" 实际上是进入技能结果页
+      setTimeout(() => router.push(`/skill/${currentSkillId}`), 1000);
     } else {
-      setShowRecoveryModal(true);
-      triggerChicken("sleep");
+      setCheckInMsg("技能点不足，快去换取吧！🥚");
+      setShowCheckIn(true);
       playSFX(SFX.TAP);
+      setTimeout(() => setShowCheckIn(false), 2000);
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  // 环游实时倒计时
+  useEffect(() => {
+    if (travelState !== 'traveling' || !currentTrip) {
+      setTimeLeft(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const start = new Date(currentTrip.startTime).getTime();
+      const diff = Math.max(0, (currentTrip.duration * 1000) - (now - start));
+      setTimeLeft(Math.floor(diff / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [travelState, currentTrip]);
+
+  const formatTimeFull = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const handleStartTravel = () => {
+    if (startTravel()) {
+      triggerChicken("skill"); // 使用一下技能动作表示出发
+      playSFX(SFX.SUCCESS);
+    } else {
+      setCheckInMsg("技能点不足或已在途中 ✨");
+      setShowCheckIn(true);
+      setTimeout(() => setShowCheckIn(false), 2000);
     }
   };
 
@@ -91,7 +173,7 @@ export default function HomePage() {
     // 模拟分享逻辑
     setCheckInMsg("分享成功！灵气已补满 ✨");
     setShowCheckIn(true);
-    recoverAura(maxAura);
+    if (recoverAura) recoverAura(maxAura);
     setShowRecoveryModal(false);
     addAffection(10);
     playSFX(SFX.SUCCESS);
@@ -137,21 +219,21 @@ export default function HomePage() {
 
       {/* 云朵 (远景) */}
       <div className="animate-drift" style={{ position: "absolute", top: 24, left: "10%", opacity: 0.6 }}>
-        <Image src="/images/scene/cloud.svg" alt="" width={80} height={48} />
+        <Image src="/images/scene/cloud.svg" alt="" width={80} height={48} style={{ height: "auto" }} />
       </div>
       <div className="animate-drift" style={{ position: "absolute", top: 80, left: "45%", opacity: 0.4, animationDelay: "3s" }}>
-        <Image src="/images/scene/cloud.svg" alt="" width={50} height={30} />
+        <Image src="/images/scene/cloud.svg" alt="" width={50} height={30} style={{ height: "auto" }} />
       </div>
 
       {/* 装饰建筑 (中景) */}
       <div style={{ position: "absolute", bottom: "18%", left: 12, opacity: 0.7 }}>
-        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} />
+        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} style={{ height: "auto" }} />
       </div>
       <div style={{ position: "absolute", bottom: "20%", right: 24, opacity: 0.7 }}>
-        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} />
+        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} style={{ height: "auto" }} />
       </div>
 
-      {/* 草地 (近景 - 增加深度感) */}
+      {/* 草地 (近景) */}
       <div 
         style={{ 
           position: "absolute", 
@@ -164,10 +246,15 @@ export default function HomePage() {
           boxShadow: "0 -10px 40px rgba(0,0,0,0.05)"
         }}
       >
-        <Image src="/images/scene/grass.svg" alt="" width={480} height={40} style={{ width: "100%", height: 40, position: "absolute", top: -20, opacity: 0.9 }} />
+        <Image 
+          src="/images/scene/grass.svg" 
+          alt="" 
+          width={480} 
+          height={40} 
+          style={{ width: "100%", height: 40, position: "absolute", top: -20, opacity: 0.9 }} 
+        />
       </div>
 
-      {/* 顶部状态栏 */}
       {/* 顶部状态栏 (冰晶毛玻璃质感) */}
       <div className="glass-header" style={{
         position: "absolute",
@@ -185,12 +272,22 @@ export default function HomePage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {/* 职业小贴片 - 现在移到了顶部左侧 */}
-            <div className="status-pill" style={{ background: `${currentCareer.color}11`, border: `1px solid ${currentCareer.color}33` }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: currentCareer.color }} />
-              <span style={{ fontSize: 13, fontWeight: 900, color: currentCareer.color }}>{currentCareer.name}</span>
+            <div 
+              className="status-pill" 
+              onClick={() => setShowExchangeModal(true)}
+              style={{ cursor: "pointer" }}
+            >
+              <span style={{ fontSize: 16, marginRight: 4 }}>🥚</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: isNight ? "#E2E8F0" : "#4B5563" }}>{eggs}</span>
             </div>
-            
+            <div 
+              className="status-pill" 
+              onClick={() => setShowExchangeModal(true)}
+              style={{ background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.2)", cursor: "pointer" }}
+            >
+              <span style={{ fontSize: 16, marginRight: 4 }}>✍️</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: "#4F46E5" }}>{skillPoints}</span>
+            </div>
             <div className="status-pill">
               <Image src="/images/icons/coin.svg" alt="鸡币" width={18} height={18} />
               <span style={{ fontSize: 14, fontWeight: 700, color: isNight ? "#E2E8F0" : "#4B5563" }}>{chickenCoin}</span>
@@ -229,30 +326,16 @@ export default function HomePage() {
         <div style={{ display: "flex", gap: 16, padding: "0 4px" }}>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
             <svg viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-              <defs>
-                <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FB7185" />
-                  <stop offset="100%" stopColor="#E11D48" />
-                </linearGradient>
-              </defs>
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGrad)" />
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#FB7185" />
             </svg>
             <div style={{ flex: 1, height: 8, background: "rgba(0,0,0,0.1)", borderRadius: 4, overflow: "hidden" }}>
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${affection}%` }}
-                style={{ height: "100%", background: "linear-gradient(90deg, #F43F5E, #FF8A9B)", borderRadius: 4 }} 
-              />
+              <motion.div animate={{ width: `${affection}%` }} style={{ height: "100%", background: "#F43F5E" }} />
             </div>
           </div>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 14 }}>😊</span>
             <div style={{ flex: 1, height: 8, background: "rgba(0,0,0,0.1)", borderRadius: 4, overflow: "hidden" }}>
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${mood}%` }}
-                style={{ height: "100%", background: "linear-gradient(90deg, #FBBF24, #FDE68A)", borderRadius: 4 }} 
-              />
+              <motion.div animate={{ width: `${mood}%` }} style={{ height: "100%", background: "#FBBF24" }} />
             </div>
           </div>
         </div>
@@ -350,13 +433,80 @@ export default function HomePage() {
             top: "50%", left: "50%", 
             transform: "translate(-50%, -50%)",
             width: 280, height: 280, 
-            background: `radial-gradient(circle, ${currentCareer.color}33 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${CAREERS.find(c => c.id === currentCareerId)?.color}33 0%, transparent 70%)`,
             zIndex: 0 
           }} />
-          <AnimatedChicken
-            careerColor={currentCareer.color}
-            externalState={chickenTrigger?.state ?? null}
-          />
+          
+          <AnimatePresence mode="wait">
+            {travelState === 'traveling' ? (
+              <motion.div
+                key="traveling"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
+                <MagicDoor 
+                  countdown={formatTimeFull(timeLeft)} 
+                  destination={DESTINATIONS.find(d => d.id === currentTrip?.destinationId)?.name || '未知目的地'} 
+                />
+              </motion.div>
+            ) : travelState === 'returned' ? (
+              <motion.div
+                key="returned"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => {
+                  const reward = claimTravelReward();
+                  if (reward) {
+                    setTravelReward(reward);
+                    setShowRewardModal(true);
+                  }
+                }}
+                style={{ cursor: 'pointer', position: "relative" }}
+              >
+                <div style={{ position: "relative" }}>
+                  <AnimatedChicken
+                    careerColor={CAREERS.find(c => c.id === currentCareerId)?.color || "#FCD34D"}
+                    externalState="idle"
+                  />
+                  {/* 回来后的礼物气泡 */}
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{ 
+                      position: "absolute", 
+                      top: -60, left: "50%", 
+                      transform: "translateX(-50%)",
+                      background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                      color: "#fff",
+                      padding: "10px 20px", 
+                      borderRadius: 24,
+                      fontSize: 15, 
+                      fontWeight: 900,
+                      boxShadow: "0 10px 25px rgba(245, 158, 11, 0.4)",
+                      whiteSpace: "nowrap",
+                      border: "3px solid #fff",
+                      zIndex: 10
+                    }}
+                  >
+                    探险归来！🎁 点击领奖
+                  </motion.div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="chicken"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ position: "relative" }}
+              >
+                <AnimatedChicken
+                  careerColor={CAREERS.find(c => c.id === currentCareerId)?.color || "#FCD34D"}
+                  externalState={chickenTrigger?.state ?? null}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
       </div>
@@ -374,157 +524,181 @@ export default function HomePage() {
         }}
       >
         <div style={{
-          background: isNight ? "rgba(30, 41, 59, 0.6)" : "rgba(255, 255, 255, 0.5)",
+          background: "rgba(255, 255, 255, 0.5)",
           backdropFilter: "blur(20px)",
           borderRadius: 44,
           padding: "18px 32px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          boxShadow: isNight ? "0 12px 50px rgba(0,0,0,0.5)" : "0 12px 50px rgba(0,0,0,0.12)",
+          boxShadow: "0 12px 50px rgba(0,0,0,0.12)",
           border: "1px solid rgba(255,255,255,0.3)"
         }}>
-          {/* 旅行按钮 */}
-          <button
-            className="game-btn shadow-vibrant"
-            onClick={() => router.push("/travel")}
+          {/* 旅行按钮 (Teal 3D) */}
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: -3 }}
+            whileTap={{ scale: 0.9 }}
+            className="game-btn"
+            onClick={handleStartTravel}
             style={{
-              width: 58,
-              height: 58,
-              borderRadius: 22,
-              background: isNight ? "rgba(15, 23, 42, 0.5)" : "#fff",
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: "linear-gradient(180deg, #6EE7B7 0%, #059669 100%)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               gap: 2,
-              border: `2px solid ${isNight ? "rgba(255,255,255,0.15)" : "#F3F4F6"}`,
-              transition: "all 0.2s ease"
+              border: "3px solid #FFF",
+              boxShadow: "0 4px 0 #047857, 0 8px 16px rgba(5, 150, 105, 0.3)"
             }}
           >
             <Image src="/images/icons/chest.svg" alt="旅行" width={28} height={28} />
-            <span style={{ fontSize: 10, color: "#065F46", fontWeight: 800 }}>环游</span>
-          </button>
+            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>环游</span>
+          </motion.button>
 
-          {/* 中间主按钮：触发当前技能 (更大更圆润) */}
+          {/* 中间主按钮：喂食 (Icon + Text) */}
           <div style={{ position: "relative" }}>
-            {/* 弱化的技能名称与切换点 - 移到了按钮上方 */}
-            <div style={{ 
-              position: "absolute", 
-              top: -46, 
-              left: "50%", 
-              transform: "translateX(-50%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 4,
-              pointerEvents: "none"
-            }}>
-              <span style={{ 
-                fontSize: 12, 
-                fontWeight: 800, 
-                color: isNight ? "#CBD5E1" : "#4B2D8F",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                whiteSpace: "nowrap"
-              }}>
-                {currentSkill.name}
-              </span>
-              {currentCareer.skills.length > 1 && (
-                <div style={{ display: "flex", gap: 6, pointerEvents: "auto" }}>
-                  {currentCareer.skills.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setCurrentSkill(s.id)}
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: currentSkillId === s.id ? currentCareer.color : "rgba(0,0,0,0.2)",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        transition: "all 0.3s ease"
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleFeed}
+              disabled={travelState === 'traveling'}
               style={{
-                position: "absolute",
-                inset: -10,
-                borderRadius: "50%",
-                border: `2px dotted ${currentCareer.color}88`,
-                opacity: 0.5
-              }}
-            />
-            <button
-              className="game-btn main-action-btn pulse-glow"
-              onClick={handleUseSkill}
-              style={{
-                width: 92,
-                height: 92,
-                borderRadius: "50%",
-                background: `linear-gradient(135deg, ${currentCareer.color}, #4C1D95)`,
-                border: "5px solid rgba(255,255,255,1)",
+                width: 156,
+                height: 52,
+                borderRadius: 26,
+                background: travelState === 'traveling'
+                  ? "rgba(156, 163, 175, 0.2)"
+                  : "rgba(255, 255, 255, 0.8)",
+                backdropFilter: "blur(10px)",
+                border: travelState === 'traveling'
+                  ? "2px solid rgba(156, 163, 175, 0.3)"
+                  : "2px solid #FCD34D",
+                padding: "4px 12px 4px 6px",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                boxShadow: `0 12px 30px ${currentCareer.color}99`,
-                position: "relative",
-                overflow: "hidden"
+                gap: 10,
+                boxShadow: travelState === 'traveling'
+                  ? "none"
+                  : "0 8px 20px rgba(245, 158, 11, 0.1)",
+                cursor: travelState === 'traveling' ? "not-allowed" : "pointer"
               }}
             >
-              {/* 星光背景装饰 */}
-              <div style={{ position: "absolute", inset: 0, opacity: 0.3, pointerEvents: "none" }}>
-                <div className="sparkle" style={{ top: "15%", left: "15%" }} />
-                <div className="sparkle" style={{ top: "70%", right: "15%" }} />
-              </div>
-              
-              <div style={{ position: "relative", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 38, height: 38, filter: "drop-shadow(0 0 10px rgba(255,255,255,0.7))" }}>
-                  <path d="M18 11V7C18 5.89543 17.1046 5 16 5C15.717 5 15.451 5.05852 15.2105 5.16391C14.8966 3.92131 13.7634 3 12.41 3C11.5161 3 10.7135 4.39086 10.2312 4.49845C9.897 4.18375 9.4442 4 8.947 4C7.84243 4 6.947 4.89543 6.947 6V11.454C6.2647 11.2315 5.5147 11.396 5 11.9101L3 13.9101L10.027 20.9371C10.59 21.5 11.353 21.815 12.148 21.815H17.414C18.739 21.815 19.899 20.899 20.201 19.613L21.365 14.665C21.733 13.104 20.767 11.55 19.167 11.127C18.784 11.025 18.391 11.001 18 11.034V11Z" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 11V15" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M9 13L9 16" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-                <motion.div
-                  animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.4, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{ position: "absolute", width: 24, height: 24, background: "white", filter: "blur(14px)", borderRadius: "50%", zIndex: -1 }}
+              <motion.div 
+                animate={travelState !== 'traveling' ? { 
+                  scale: [1, 1.1, 1],
+                } : {}}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  background: travelState === 'traveling' ? "#D1D5DB" : "#FBBF24",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid #fff"
+                }}
+              >
+                <Image 
+                  src="/images/ui/sack.png" 
+                  alt="饲料" 
+                  width={36} 
+                  height={36}
+                  style={{ height: "auto" }}
                 />
-              </div>
-              <span style={{ fontSize: 12, color: "#fff", fontWeight: 900, textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>{currentSkill.name}</span>
-            </button>
+              </motion.div>
+              <span style={{ 
+                fontSize: 17, 
+                color: travelState === 'traveling' ? "#9CA3AF" : "#78350F", 
+                fontWeight: 900 
+              }}>
+                {travelState === 'traveling' ? "在途中" : "喂食"}
+              </span>
+            </motion.button>
           </div>
 
-          {/* 仓库/物资按钮 */}
-          <button
-            className="game-btn shadow-vibrant"
+          {/* 打工按钮 (Indigo 3D) */}
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 3 }}
+            whileTap={{ scale: 0.9 }}
+            className="game-btn"
+            onClick={() => router.push("/career")}
             style={{
-              width: 58,
-              height: 58,
-              borderRadius: 22,
-              background: isNight ? "rgba(15, 23, 42, 0.5)" : "#fff",
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: "linear-gradient(180deg, #A5B4FC 0%, #4F46E5 100%)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               gap: 2,
-              border: `2px solid ${isNight ? "rgba(255,255,255,0.15)" : "#F3F4F6"}`,
-              transition: "all 0.2s ease"
+              border: "3px solid #FFF",
+              boxShadow: "0 4px 0 #3730A3, 0 8px 16px rgba(79, 70, 229, 0.3)"
             }}
           >
-            <Image src="/images/icons/bag.svg" alt="物品" width={28} height={28} />
-            <span style={{ fontSize: 10, color: "#B45309", fontWeight: 800 }}>物资</span>
-          </button>
+            <Image src="/images/icons/bag.svg" alt="打工" width={28} height={28} />
+            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>打工</span>
+          </motion.button>
         </div>
       </div>
+
+      {/* 下蛋动画层 */}
+      {showEggAnim && (
+        <motion.div
+          initial={{ opacity: 1, y: 0, scale: 0.5 }}
+          animate={{ opacity: 0, y: -100, scale: 1.5 }}
+          style={{
+            position: "fixed",
+            left: showEggAnim.x - 20,
+            top: showEggAnim.y - 40,
+            zIndex: 1000,
+            fontSize: 40,
+            pointerEvents: "none"
+          }}
+        >
+          🥚
+        </motion.div>
+      )}
+
+      {/* 奖励弹窗 */}
+      {showRewardModal && travelReward && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 200,
+          padding: 24
+        }}>
+          <div className="glass-card animate-bounce-in" style={{
+            width: "100%",
+            maxWidth: 360,
+            borderRadius: 32,
+            padding: 40,
+            textAlign: "center",
+            background: "#fff"
+          }}>
+            <h2 style={{ color: "#F59E0B", fontWeight: 900, marginBottom: 20 }}>探险大发现！</h2>
+            <div style={{ fontSize: 80, marginBottom: 20 }}>{travelReward.image}</div>
+            <h3 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>{travelReward.name}</h3>
+            <p style={{ color: "#6B7280", margin: "10px 0 30px" }}>{travelReward.quote}</p>
+            <button 
+              className="game-btn main-action-btn"
+              onClick={() => setShowRewardModal(false)}
+              style={{ width: "100%", padding: "16px", borderRadius: 20 }}
+            >
+              收下礼物
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 灵气恢复弹窗 */}
       {showRecoveryModal && (
@@ -545,45 +719,75 @@ export default function HomePage() {
             borderRadius: 32,
             padding: 32,
             textAlign: "center",
-            background: "rgba(255,255,255,0.95)"
+            background: "#fff"
           }}>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>😴</div>
-              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#4C1D95" }}>灵气不足啦</h3>
-              <p style={{ margin: "8px 0 0", fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>
-                主角鸡累得睡着了...<br/>通过分享来唤醒它并补满灵气吧！
-              </p>
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <button 
-                className="game-btn main-action-btn"
-                onClick={handleShare}
-                style={{
-                  width: "100%",
-                  padding: "16px",
-                  fontSize: 16,
-                  borderRadius: 20
-                }}
-              >
-                🌟 分享给好友补满
-              </button>
-              <button 
-                className="game-btn"
-                onClick={() => setShowRecoveryModal(false)}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#9CA3AF",
-                  background: "transparent",
-                  border: "none"
-                }}
-              >
-                晚点再说
-              </button>
-            </div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>😴</div>
+            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#4C1D95" }}>灵气不足啦</h3>
+            <p style={{ margin: "8px 0 0", fontSize: 14, color: "#6B7280" }}>
+              主角鸡累得睡着了...<br/>通过分享来唤醒它并补满灵气吧！
+            </p>
+            <button 
+              className="game-btn main-action-btn"
+              onClick={handleShare}
+              style={{ width: "100%", padding: "16px", borderRadius: 20, marginTop: 20 }}
+            >
+              🌟 分享给好友补满
+            </button>
+            <button 
+              className="game-btn"
+              onClick={() => setShowRecoveryModal(false)}
+              style={{ width: "100%", marginTop: 12, color: "#9CA3AF" }}
+            >
+              晚点再说
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 鸡蛋兑换弹窗 */}
+      {showExchangeModal && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 110,
+          padding: 24
+        }}>
+          <div className="glass-card animate-bounce-in" style={{
+            width: "100%",
+            maxWidth: 320,
+            borderRadius: 32,
+            padding: 32,
+            textAlign: "center",
+            background: "#fff"
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🥚 → ✍️</div>
+            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#4F46E5" }}>鸡蛋兑换处</h3>
+            <p style={{ margin: "8px 0 0", fontSize: 14, color: "#6B7280" }}>
+              消耗 10 个鸡蛋获得 1 点技能点
+            </p>
+            <button 
+              className="game-btn btn-primary"
+              onClick={() => {
+                if (exchangeEggsForPoints(10)) {
+                  setShowExchangeModal(false);
+                }
+              }}
+              style={{ width: "100%", padding: "16px", borderRadius: 20, marginTop: 20 }}
+            >
+              立即兑换
+            </button>
+            <button 
+              className="game-btn"
+              onClick={() => setShowExchangeModal(false)}
+              style={{ width: "100%", marginTop: 12, color: "#9CA3AF" }}
+            >
+              返回
+            </button>
           </div>
         </div>
       )}

@@ -67,8 +67,10 @@ export interface CheckInDay {
 export interface Masterpiece {
   id: string;
   name: string;
-  originalArtist: string;
-  imageUrl: string;
-  chickenDescription: string;
-  collectedAt: string;
+  originalName: string;
+  artist: string;
+  image: string;
+  quote: string;
+  rarity: "C" | "B" | "A" | "S" | "SSR";
+  collectedAt?: string;
 }

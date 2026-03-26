@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { SFX, playSFX } from "@/lib/audio";
 
-export type ChickenState = "idle" | "hover" | "tap" | "checkin" | "skill" | "sleep";
+export type ChickenState = "idle" | "hover" | "tap" | "checkin" | "skill" | "sleep" | "eating";
 
 interface Particle {
   id: number;
@@ -58,6 +58,7 @@ const DIALOGUES: Record<ChickenState, string[]> = {
   checkin: ["签到成功！又是努力的一天", "鸡币拿好哦！"],
   skill: ["灵气爆发！", "看我大显身威！", "命运...已觉醒！"],
   sleep: ["呼... 咕...", "zZZ...", "梦到好多虫子..."],
+  eating: ["真香！🥚", "吧唧吧唧...", "这个好次！✨", "干饭咯！"],
 };
 
 // Dialogue Bubble Component
@@ -170,6 +171,7 @@ export default function AnimatedChicken({
     checkin: "/images/characters/chicken-checkin.png",
     skill: "/images/characters/chicken-skill.png",
     sleep: "/images/characters/chicken-sleep.png",
+    eating: "/images/characters/chicken-idle.png",
   };
 
   // Helper to remove white background using Canvas
@@ -335,6 +337,16 @@ export default function AnimatedChicken({
         scale: { duration: 0.5 },
       },
     },
+    eating: {
+      rotate: [0, 15, 0, 15, 0],
+      y: [0, 10, 0, 10, 0],
+      scaleX: [1, 1.05, 1, 1.05, 1],
+      transition: { 
+        duration: 1.2, 
+        ease: "easeInOut",
+        times: [0, 0.2, 0.4, 0.6, 1]
+      }
+    },
   };
 
   const currentImgSrc = processedImages[imageMap[state]] || imageMap[state];
@@ -394,7 +406,7 @@ export default function AnimatedChicken({
         key={state} // Trigger animation on state change
         initial={{ scale: 0.9, y: 5 }}
         animate={{
-          ...chickenVariants[state],
+          ...(chickenVariants[state] as any),
           x: headOffset.x,
           // 这里的 y 包含了 variant 的基础值和 headOffset 的偏移
           y: (Array.isArray((chickenVariants[state] as any).y) ? 0 : ((chickenVariants[state] as any).y || 0)) + headOffset.y,
