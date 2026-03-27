@@ -24,7 +24,7 @@ export default function GalleryPage() {
           <div style={{ padding: 60, textAlign: "center" }}>
             <div style={{ fontSize: 64, marginBottom: 20, opacity: 0.3 }}>🖼️</div>
             <p style={{ color: "#9CA3AF", fontSize: 16, fontWeight: 500 }}>
-              这里空空如也...<br/>快去派主角鸡环游世界吧！
+              这里空空如也...<br/>快去派主角鸡去探险吧！
             </p>
             <button 
               className="game-btn btn-primary"

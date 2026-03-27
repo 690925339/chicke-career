@@ -134,7 +134,7 @@ export default function HomePage() {
 
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
-  // 环游实时倒计时
+  // 去探险实时倒计时
   useEffect(() => {
     if (travelState !== 'traveling' || !currentTrip) {
       setTimeLeft(0);
@@ -554,8 +554,8 @@ export default function HomePage() {
               boxShadow: "0 4px 0 #047857, 0 8px 16px rgba(5, 150, 105, 0.3)"
             }}
           >
-            <Image src="/images/icons/chest.svg" alt="旅行" width={28} height={28} />
-            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>环游</span>
+            <Image src="/images/icons/chest.svg" alt="去探险" width={28} height={28} />
+            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>去探险</span>
           </motion.button>
 
           {/* 中间主按钮：喂食 (Icon + Text) */}
