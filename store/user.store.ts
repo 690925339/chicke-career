@@ -58,6 +58,7 @@ interface UserState {
   startTravel: () => boolean;
   checkTravelStatus: () => void;
   claimTravelReward: () => Masterpiece | null;
+  stopTravel: () => void;
   addAffection: (amount: number) => void;
 }
 
@@ -255,6 +256,10 @@ export const useUserStore = create<UserState>()(
 
         set({ travelState: 'idle', currentTrip: null });
         return null;
+      },
+      
+      stopTravel: () => {
+        set({ travelState: 'idle', currentTrip: null });
       },
       
       addAffection: (amount) => set((s) => ({

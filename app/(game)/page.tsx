@@ -20,8 +20,6 @@ export default function HomePage() {
     currentSkillId,
     affection,
     mood,
-    checkIn, 
-    lastCheckInDate,
     setCurrentSkill,
     useAura,
     recoverAura,
@@ -37,19 +35,27 @@ export default function HomePage() {
     feedChicken,
     exchangeEggsForPoints,
     useSkillPoint,
-    startTravel
+    startTravel,
+    stopTravel
   } = useUserStore();
   
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [showRecallModal, setShowRecallModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   const [showEggAnim, setShowEggAnim] = useState<{ x: number; y: number } | null>(null);
   const [travelReward, setTravelReward] = useState<Masterpiece | null>(null);
   const [checkInMsg, setCheckInMsg] = useState("");
   const [chickenTrigger, setChickenTrigger] = useState<{ state: ChickenState; key: number } | null>(null);
   const [isNight, setIsNight] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const triggerKeyRef = useRef(0);
+
+  // 挂载检测
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // 昼夜检测
   useEffect(() => {
@@ -71,29 +77,12 @@ export default function HomePage() {
   const currentCareer = CAREERS.find((c) => c.id === currentCareerId) ?? CAREERS[0];
   const currentSkill = currentCareer.skills.find(s => s.id === currentSkillId) ?? currentCareer.skills[0];
   
-  const todayStr = new Date().toDateString();
-  const checkedInToday = lastCheckInDate === todayStr;
 
   const triggerChicken = (state: ChickenState) => {
     setChickenTrigger({ state, key: ++triggerKeyRef.current });
     if (state === "tap") addAffection(1);
   };
 
-  const handleCheckIn = () => {
-    const { success, reward } = checkIn();
-    if (success) {
-      setCheckInMsg(`签到成功！获得 ${reward} 鸡币`);
-      triggerChicken("checkin");
-      addAffection(5);
-      playSFX(SFX.SUCCESS);
-    } else {
-      setCheckInMsg("今天已经签到过啦~");
-      triggerChicken("tap");
-      playSFX(SFX.TAP);
-    }
-    setShowCheckIn(true);
-    setTimeout(() => setShowCheckIn(false), 2000);
-  };
 
   const handleFeed = (e: React.MouseEvent) => {
     if (travelState === 'traveling') {
@@ -203,8 +192,8 @@ export default function HomePage() {
         ))
       )}
 
-      {/* 漂浮粒子 (近景) */}
-      {[...Array(12)].map((_, i) => (
+      {/* 漂浮粒子 (近景) - 仅在客户端渲染以避免水合不一致 */}
+      {isMounted && [...Array(12)].map((_, i) => (
         <div 
           key={i} 
           className="particle" 
@@ -227,10 +216,10 @@ export default function HomePage() {
 
       {/* 装饰建筑 (中景) */}
       <div style={{ position: "absolute", bottom: "18%", left: 12, opacity: 0.7 }}>
-        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} style={{ height: "auto" }} />
+        <Image src="/images/scene/trees.svg" alt="" width={80} height={110} style={{ width: 80, height: "auto" }} />
       </div>
       <div style={{ position: "absolute", bottom: "20%", right: 24, opacity: 0.7 }}>
-        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} style={{ height: "auto" }} />
+        <Image src="/images/scene/windmill.svg" alt="" width={50} height={70} style={{ width: 50, height: "auto" }} />
       </div>
 
       {/* 草地 (近景) */}
@@ -251,7 +240,8 @@ export default function HomePage() {
           alt="" 
           width={480} 
           height={40} 
-          style={{ width: "100%", height: 40, position: "absolute", top: -20, opacity: 0.9 }} 
+          priority
+          style={{ width: "100%", height: "auto", position: "absolute", top: -20, opacity: 0.9 }} 
         />
       </div>
 
@@ -306,20 +296,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <button
-            onClick={handleCheckIn}
-            className={`game-btn ${checkedInToday ? "btn-disabled" : "btn-primary"}`}
-            style={{
-              padding: "8px 20px",
-              borderRadius: 20,
-              fontSize: 13,
-              fontWeight: 800,
-              boxShadow: checkedInToday ? "none" : "0 4px 12px rgba(76, 29, 149, 0.3)",
-              transition: "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
-            }}
-          >
-            {checkedInToday ? "已签" : "✨ 每日签到"}
-          </button>
         </div>
 
         {/* 好感度/心情条 */}
@@ -439,17 +415,19 @@ export default function HomePage() {
           
           <AnimatePresence mode="wait">
             {travelState === 'traveling' ? (
-              <motion.div
-                key="traveling"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-              >
-                <MagicDoor 
-                  countdown={formatTimeFull(timeLeft)} 
-                  destination={DESTINATIONS.find(d => d.id === currentTrip?.destinationId)?.name || '未知目的地'} 
-                />
-              </motion.div>
+                <motion.div
+                  key="traveling"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => setShowRecallModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <MagicDoor 
+                    countdown={formatTimeFull(timeLeft)} 
+                    destination={DESTINATIONS.find(d => d.id === currentTrip?.destinationId)?.name || '未知目的地'} 
+                  />
+                </motion.div>
             ) : travelState === 'returned' ? (
               <motion.div
                 key="returned"
@@ -511,137 +489,152 @@ export default function HomePage() {
 
       </div>
 
-      {/* 底部操作区 (浮岛式底栏) */}
+      {/* 底部操作区 (清爽纯文字版) */}
       <div
         style={{
           position: "absolute",
-          bottom: 24,
+          bottom: 18,
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
-          width: "calc(100% - 32px)",
-          maxWidth: 420,
+          width: "calc(100% - 24px)",
+          maxWidth: 440,
         }}
       >
+        {/* 中间按钮上方的提示文字 */}
         <div style={{
-          background: "rgba(255, 255, 255, 0.5)",
-          backdropFilter: "blur(20px)",
-          borderRadius: 44,
-          padding: "18px 32px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: "0 12px 50px rgba(0,0,0,0.12)",
-          border: "1px solid rgba(255,255,255,0.3)"
+          position: "absolute",
+          top: -26,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "#E8F5E9",
+          padding: "2px 16px",
+          borderRadius: "10px 10px 0 0",
+          fontSize: 11,
+          fontWeight: 800,
+          color: "#4B7A2E",
+          whiteSpace: "nowrap",
+          border: "2px solid #FFF",
+          borderBottom: "none",
+          zIndex: 5
         }}>
-          {/* 旅行按钮 (Teal 3D) */}
+          喂越多，明早收毛越多
+        </div>
+
+        <div style={{
+          display: "flex",
+          alignItems: "stretch",
+          justifyContent: "center",
+          gap: 6,
+        }}>
+          {/* 左侧小按钮: 去探险 */}
           <motion.button
-            whileHover={{ scale: 1.1, rotate: -3 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
             className="game-btn"
             onClick={handleStartTravel}
             style={{
-              width: 64,
+              width: 82,
               height: 64,
-              borderRadius: 20,
-              background: "linear-gradient(180deg, #6EE7B7 0%, #059669 100%)",
+              borderRadius: "32px 14px 14px 32px",
+              background: "linear-gradient(180deg, #FF8E61 0%, #FF5A4A 100%)",
+              position: "relative",
+              overflow: "hidden",
+              border: "3px solid #FFF",
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 2,
-              border: "3px solid #FFF",
-              boxShadow: "0 4px 0 #047857, 0 8px 16px rgba(5, 150, 105, 0.3)"
+              padding: 0
             }}
           >
-            <Image src="/images/icons/chest.svg" alt="去探险" width={28} height={28} />
-            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>去探险</span>
+            <div style={{
+              position: "absolute", top: "-15%", left: "-10%", width: "120%", height: "50%",
+              background: "rgba(255,255,255,0.25)", borderRadius: "50%", pointerEvents: "none"
+            }} />
+            <span style={{ 
+              fontSize: 18, 
+              fontWeight: 900, 
+              color: "#FFF", 
+              zIndex: 1,
+              textShadow: "1px 1.5px 0 #9E1F1F, -1px -1px 0 #9E1F1F, 1px -1px 0 #9E1F1F, -1px 1.5px 0 #9E1F1F, 0 2px 4px rgba(0,0,0,0.3)"
+            }}>去探险</span>
           </motion.button>
 
-          {/* 中间主按钮：喂食 (Icon + Text) */}
-          <div style={{ position: "relative" }}>
+          {/* 中间主按钮: 喂大米 */}
+          <div style={{ position: "relative", flex: 1, height: 64 }}>
             <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleFeed}
               disabled={travelState === 'traveling'}
               style={{
-                width: 156,
-                height: 52,
-                borderRadius: 26,
+                width: "100%", height: "100%", borderRadius: 14,
                 background: travelState === 'traveling'
-                  ? "rgba(156, 163, 175, 0.2)"
-                  : "rgba(255, 255, 255, 0.8)",
-                backdropFilter: "blur(10px)",
-                border: travelState === 'traveling'
-                  ? "2px solid rgba(156, 163, 175, 0.3)"
-                  : "2px solid #FCD34D",
-                padding: "4px 12px 4px 6px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                boxShadow: travelState === 'traveling'
-                  ? "none"
-                  : "0 8px 20px rgba(245, 158, 11, 0.1)",
+                  ? "linear-gradient(180deg, #D1D5DB 0%, #9CA3AF 100%)"
+                  : "linear-gradient(180deg, #FFD84D 0%, #FBBF24 100%)",
+                border: "3px solid #FFF", position: "relative", overflow: "hidden",
+                display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: travelState === 'traveling' ? "not-allowed" : "pointer"
               }}
             >
-              <motion.div 
-                animate={travelState !== 'traveling' ? { 
-                  scale: [1, 1.1, 1],
-                } : {}}
-                transition={{ duration: 2, repeat: Infinity }}
-                style={{
-                  width: 44,
-                  height: 44,
-                  background: travelState === 'traveling' ? "#D1D5DB" : "#FBBF24",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "2px solid #fff"
-                }}
-              >
-                <Image 
-                  src="/images/ui/sack.png" 
-                  alt="饲料" 
-                  width={36} 
-                  height={36}
-                  style={{ height: "auto" }}
-                />
-              </motion.div>
-              <span style={{ 
-                fontSize: 17, 
-                color: travelState === 'traveling' ? "#9CA3AF" : "#78350F", 
-                fontWeight: 900 
+              <div style={{
+                position: "absolute", top: "-20%", left: "-5%", width: "110%", height: "55%",
+                background: "rgba(255,255,255,0.25)", borderRadius: "50%", pointerEvents: "none"
+              }} />
+              
+              <div style={{ 
+                fontSize: 22, fontWeight: 900, color: "#FFF", zIndex: 2,
+                textShadow: "1.5px 2px 0 #8F5300, -1.5px -1.5px 0 #8F5300, 1.5px -1.5px 0 #8F5300, -1.5px 2px 0 #8F5300, 0 3px 6px rgba(0,0,0,0.2)"
               }}>
-                {travelState === 'traveling' ? "在途中" : "喂食"}
-              </span>
+                喂大米
+              </div>
             </motion.button>
+
+            {/* 29 角标 */}
+            <div style={{
+              position: "absolute", right: -4, top: -8,
+              minWidth: 26, height: 26, borderRadius: 13,
+              background: "linear-gradient(180deg, #FF7B7B 0%, #F44336 100%)",
+              border: "2px solid #FFF", color: "#FFF",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14, fontWeight: 900, zIndex: 10,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+            }}>
+              {eggs > 99 ? "99+" : eggs}
+            </div>
           </div>
 
-          {/* 打工按钮 (Indigo 3D) */}
+          {/* 右侧小按钮: 赚大米 */}
           <motion.button
-            whileHover={{ scale: 1.1, rotate: 3 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
             className="game-btn"
             onClick={() => router.push("/career")}
             style={{
-              width: 64,
+              width: 82,
               height: 64,
-              borderRadius: 20,
-              background: "linear-gradient(180deg, #A5B4FC 0%, #4F46E5 100%)",
+              borderRadius: "14px 32px 32px 14px",
+              background: "linear-gradient(180deg, #4ADE80 0%, #22C55E 100%)",
+              position: "relative",
+              overflow: "hidden",
+              border: "3px solid #FFF",
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 2,
-              border: "3px solid #FFF",
-              boxShadow: "0 4px 0 #3730A3, 0 8px 16px rgba(79, 70, 229, 0.3)"
+              padding: 0
             }}
           >
-            <Image src="/images/icons/bag.svg" alt="打工" width={28} height={28} />
-            <span style={{ fontSize: 11, color: "#fff", fontWeight: 900 }}>打工</span>
+            <div style={{
+              position: "absolute", top: "-15%", left: "-10%", width: "120%", height: "50%",
+              background: "rgba(255,255,255,0.25)", borderRadius: "50%", pointerEvents: "none"
+            }} />
+            <span style={{ 
+              fontSize: 18, 
+              fontWeight: 900, 
+              color: "#FFF", 
+              zIndex: 1,
+              textShadow: "1px 1.5px 0 #1B5E20, -1px -1px 0 #1B5E20, 1px -1px 0 #1B5E20, -1px 1.5px 0 #1B5E20, 0 2px 4px rgba(0,0,0,0.3)"
+            }}>赚大米</span>
           </motion.button>
         </div>
       </div>
@@ -741,6 +734,136 @@ export default function HomePage() {
               晚点再说
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 召回确认弹窗 (精调版，匹配截图风格) */}
+      {showRecallModal && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 300,
+          padding: 20
+        }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="glass-card" 
+            style={{
+              width: "100%",
+              maxWidth: 340,
+              borderRadius: 28,
+              padding: "40px 24px 30px",
+              textAlign: "center",
+              background: "#FFF",
+              position: "relative",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+              border: "4px solid #FDF2F2"
+            }}
+          >
+            {/* 关闭按钮 */}
+            <button 
+              onClick={() => setShowRecallModal(false)}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "transparent",
+                border: "none",
+                fontSize: 24,
+                color: "#9CA3AF",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              ✕
+            </button>
+
+            <h3 style={{ 
+              margin: "0 0 10px", 
+              fontSize: 18, 
+              fontWeight: 900, 
+              color: "#92400E",
+              lineHeight: 1.4,
+              padding: "0 10px"
+            }}>
+              主角鸡正在探险中，现在召回可能会失去礼物哦！
+            </h3>
+
+            {/* 中间角色区域 */}
+            <div style={{ 
+              height: 160, 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              position: "relative",
+              margin: "10px 0"
+            }}>
+              {/* 装饰背景山脉/云朵 (模拟截图) */}
+              <div style={{ position: "absolute", bottom: 20, width: "100%", opacity: 0.5, pointerEvents: "none" }}>
+                <Image src="/images/scene/cloud.svg" alt="" width={60} height={36} style={{ position: "absolute", left: 0, top: -20 }} />
+                <Image src="/images/scene/trees.svg" alt="" width={40} height={60} style={{ position: "absolute", right: 0, bottom: 0 }} />
+              </div>
+              
+              <AnimatedChicken
+                careerColor={CAREERS.find(c => c.id === currentCareerId)?.color || "#FCD34D"}
+                externalState="sad"
+              />
+            </div>
+
+            {/* 按钮群 */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 10 }}>
+              <button 
+                className="game-btn"
+                onClick={() => {
+                  stopTravel();
+                  setShowRecallModal(false);
+                  playSFX(SFX.TAP);
+                }}
+                style={{ 
+                  width: "100%", 
+                  padding: "12px", 
+                  borderRadius: 25, 
+                  background: "#FFF", 
+                  border: "3px solid #E5E7EB",
+                  color: "#4B5563",
+                  fontSize: 18,
+                  fontWeight: 900,
+                  boxShadow: "0 4px 0 #E5E7EB"
+                }}
+              >
+                确认召回
+              </button>
+              <button 
+                className="game-btn"
+                onClick={() => setShowRecallModal(false)}
+                style={{ 
+                  width: "100%", 
+                  padding: "12px", 
+                  borderRadius: 25, 
+                  background: "linear-gradient(180deg, #FFD84D 0%, #FBBF24 100%)", 
+                  border: "3px solid #FFF",
+                  color: "#FFF",
+                  fontSize: 18,
+                  fontWeight: 900,
+                  boxShadow: "0 4px 12px rgba(251, 191, 36, 0.4)",
+                  textShadow: "1px 1px 0 #8F5300, -1px -1px 0 #8F5300, 1px -1px 0 #8F5300, -1px 1px 0 #8F5300"
+                }}
+              >
+                继续探险
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
 

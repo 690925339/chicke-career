@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <canvas id="canvas" style="border:1px solid #000; display:none;"></canvas>
+  <div id="output">
+    <h1>V5: No-API Extraction Splitter</h1>
+    <p id="status">Loading image...</p>
+    <div id="log"></div>
+  </div>
+  <script>
+    window.framesData = []; // 用于存放处理后的 Base64 数据
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = '/images/characters/main-chicken.png';
+    
+    img.onload = async () => {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const imgW = img.width;
+      const imgH = img.height;
+      
+      const yStarts = [25, 260, 495, 725]; 
+      const targetH = 238; 
+      const cellW = imgW / 4;
+      const targetW = cellW;
+
+      canvas.width = targetW;
+      canvas.height = targetH;
+
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const idx = r * 4 + c;
+          ctx.clearRect(0, 0, targetW, targetH);
+          ctx.drawImage(img, c * cellW, yStarts[r], targetW, targetH, 0, 0, targetW, targetH);
+          
+          const imageData = ctx.getImageData(0, 0, targetW, targetH);
+          const data = imageData.data;
+          const bgR = data[0];
+          const bgG = data[1];
+          const bgB = data[2];
+
+          for (let i = 0; i < data.length; i += 4) {
+            const rVal = data[i];
+            const gVal = data[i+1];
+            const bVal = data[i+2];
+            const dist = Math.sqrt((rVal - bgR)**2 + (gVal - bgG)**2 + (bVal - bgB)**2);
+            if (dist < 50 || (rVal > 220 && gVal > 220 && bVal > 220)) {
+               data[i+3] = 0;
+            }
+          }
+          ctx.putImageData(imageData, 0, 0);
+
+          const dataUrl = canvas.toDataURL('image/png');
+          window.framesData.push({ idx, dataUrl });
+          
+          const div = document.createElement('div');
+          div.textContent = `Frame ${idx} processed (V5 No-API).`;
+          document.getElementById('log').appendChild(div);
+        }
+      }
+      document.getElementById('status').textContent = 'Done';
+      console.log('ALL_FRAMES_READY');
+    };
+  </script>
+</body>
+</html>

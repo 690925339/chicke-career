@@ -11,7 +11,7 @@ import { SFX, playSFX } from "@/lib/audio";
  * [12] 跑动     [13] 叹气      [14] 思考      [15] 斜眼
  */
 
-export type ChickenState = "idle" | "hover" | "tap" | "checkin" | "skill" | "sleep" | "eating";
+export type ChickenState = "idle" | "hover" | "tap" | "checkin" | "skill" | "sleep" | "eating" | "sad";
 
 interface AnimatedChickenProps {
   externalState?: ChickenState | null;
@@ -22,33 +22,20 @@ interface AnimatedChickenProps {
 // 动画序列：[帧索引, 持续时间ms]
 const SEQUENCES: Record<string, [number, number][]> = {
   IDLE: [[0, 3000]],
-  TAP_REACT: [
-    [1, 150], // 被戳右脸
-    [2, 400], // 惊讶
-    [0, 0]    // 回到默认
-  ],
-  TAP_LEFT: [
-    [4, 150], // 被戳左脸
-    [6, 300], // 眩晕
-    [13, 300], // 叹气
+  FULL_ACTION: [
+    [0, 80], [1, 80], [2, 80], [3, 80],
+    [4, 80], [5, 80], [6, 80], [7, 80],
+    [8, 80], [9, 80], [10, 80], [11, 80],
+    [12, 80], [13, 80], [14, 80], [15, 80],
     [0, 0]
   ],
-  ANGRY: [
-    [3, 500],
-    [7, 500],
-    [0, 0]
-  ],
-  SKILL: [
-    [10, 200], [11, 200], [10, 200], [11, 200],
-    [2, 600],
-    [0, 0]
-  ],
-  EATING: [
-    [9, 200], [14, 200], [9, 200], [14, 200],
-    [11, 400],
-    [0, 0]
-  ],
+  TAP_REACT: [[1, 150], [2, 400], [0, 0]],
+  TAP_LEFT: [[4, 150], [6, 300], [13, 300], [0, 0]],
+  ANGRY: [[3, 500], [7, 500], [0, 0]],
+  SKILL: [[10, 200], [11, 200], [10, 200], [11, 200], [2, 600], [0, 0]],
+  EATING: [[9, 200], [14, 200], [9, 200], [14, 200], [11, 400], [0, 0]],
   SLEEP: [[7, 2000]],
+  SAD: [[7, 2000]],
   HOVER: [[15, 200], [0, 200]],
 };
 
@@ -58,6 +45,7 @@ const DIALOGUES: Record<string, string[]> = {
   skill: ["灵气爆发！", "看我大显身威！"],
   sleep: ["呼... 咕...", "zZZ..."],
   eating: ["真香！🥚", "吧唧吧唧..."],
+  sad: ["呜呜... 别召回我嘛", "我还想继续旅行...", "再待一会儿好不好？"],
 };
 
 /**
@@ -77,7 +65,7 @@ function ChickenFrame({
         width: "100%", 
         height: "100%",
         position: "relative",
-        filter: careerColor !== "transparent" ? `drop-shadow(0 0 12px ${careerColor}66)` : "none"
+        filter: "none"
       }}
     >
       <img
@@ -141,15 +129,8 @@ export default function AnimatedChicken({
   const handleClick = () => {
     if (animationLock.current) return;
     
-    // 连贯动画触发：随机动作序列
-    const rand = Math.random();
-    if (rand < 0.35) {
-      playSequence("TAP_REACT");
-    } else if (rand < 0.70) {
-      playSequence("TAP_LEFT");
-    } else {
-      playSequence("ANGRY");
-    }
+    // 连贯动画触发：播放全部 16 帧
+    playSequence("FULL_ACTION");
     
     showSpeech("tap");
     playSFX(SFX.TAP);
@@ -173,6 +154,10 @@ export default function AnimatedChicken({
         playSequence("SLEEP");
         showSpeech("sleep");
         break;
+      case "sad":
+        playSequence("SAD");
+        showSpeech("sad");
+        break;
       case "tap":
         handleClick();
         break;
@@ -188,12 +173,12 @@ export default function AnimatedChicken({
     };
   }, []);
 
-  if (!isMounted) return <div style={{ width: 140, height: 140 }} />;
+  if (!isMounted) return <div style={{ width: 190, height: 190 }} />;
 
   const shadowColor = careerColor.startsWith("#") ? `${careerColor}66` : "rgba(0,0,0,0.2)";
 
   return (
-    <div style={{ position: "relative", width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", width: 190, height: 190, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {/* 气泡对话层 */}
       <AnimatePresence>
         {speech && (
@@ -260,13 +245,15 @@ export default function AnimatedChicken({
         onClick={handleClick}
         style={{ 
           cursor: "pointer", 
-          width: 140, 
-          height: 140, 
+          width: 190, 
+          height: 190, 
           zIndex: 5, 
           position: "relative",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          background: careerColor !== "transparent" ? `radial-gradient(circle, ${careerColor}44 0%, transparent 70%)` : "none",
+          borderRadius: "50%"
         }}
       >
         <ChickenFrame index={frameIndex} careerColor={careerColor} />
